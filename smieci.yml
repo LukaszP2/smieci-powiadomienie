@@ -109,7 +109,7 @@ action:
 - service: tts.cloud_say
   entity_id: !input 'media_player'
   data:
-    message: !input 'message'
+    message: !input 'reminder_message'
     options:
       gender: !input 'tts_gender'
     language: !input 'tts_language'
