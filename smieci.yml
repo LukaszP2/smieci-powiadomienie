@@ -39,6 +39,10 @@ blueprint:
           max: 1.0
           step: 0.1
           mode: slider
+    message:
+      name: Message (Optional)
+      description: 'Default: "Battery is low on {{ device_name }}"'
+      default: Battery is low on {{ device_name }}
     tts_gender:
       name: TTS Gender (Optional)
       description: 'Default: "female"'
@@ -109,7 +113,7 @@ action:
 - service: tts.cloud_say
   entity_id: !input 'media_player'
   data:
-    message: !input 'reminder_message'
+    message: !input 'message'
     options:
       gender: !input 'tts_gender'
     language: !input 'tts_language'
