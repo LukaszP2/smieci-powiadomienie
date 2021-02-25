@@ -1,0 +1,115 @@
+blueprint:
+  name: Garbage reminder
+  domain: automation
+  input:
+    reminder_time:
+      name: Reminder time
+      description: At what time the day before do you want to be reminded
+      selector:
+        time:
+    day_offset:
+      name: Day offset
+      description: Amount of days to be added to the triggers date to check for sensor value matches. E.g. 1 to be notified the day before or 0 for notification on the garbage collection day.
+      default: 1
+    reminder_title:
+      name: Reminder title
+      description: Shown as title in the notification
+      default: Garbage reminder
+    reminder_message:
+      name: Reminder message 
+      description: Accompanying text in the notification
+      default: "The following garbage will be picked up tomorrow: "
+    notifier:
+      name: Notifier
+      description: Name of integration you prefer to use for notifications. E.g. notify.notify
+      default: "notify.notify"
+    media_player:
+      name: Media Player
+      description: The media player to send the TTS message to.
+      selector:
+        entity:
+          domain: media_player
+    media_player_volume:
+      name: Media Player Volume (Optional)
+      description: Set the media player's volume. (Leave at 0 or unset to leave unchanged)
+      default: 0.0
+      selector:
+        number:
+          min: 0.0
+          max: 1.0
+          step: 0.1
+          mode: slider
+    tts_gender:
+      name: TTS Gender (Optional)
+      description: 'Default: "female"'
+      default: female
+    tts_language:
+      name: TTS Language (Optional)
+      description: 'Default: "en-GB"'
+      default: en-GB
+
+    garbage_sensor_1:
+      name: Garbage sensor 1
+      description: Sensor should have a value like YYYY-MM-DD
+      selector:
+        entity:
+          domain: sensor
+    garbage_sensor_2:
+      name: Garbage sensor 2
+      description: Sensor should have a value like YYYY-MM-DD
+      selector:
+        entity:
+          domain: sensor
+    garbage_sensor_3:
+      name: Garbage sensor 3
+      description: Sensor should have a value like YYYY-MM-DD
+      selector:
+        entity:
+          domain: sensor
+    garbage_sensor_4:
+      name: Garbage sensor 4
+      description: Sensor should have a value like YYYY-MM-DD
+      selector:
+        entity:
+          domain: sensor
+    garbage_sensor_5:
+      name: Garbage sensor 5
+      description: Sensor should have a value like YYYY-MM-DD
+      selector:
+        entity:
+          domain: sensor
+          
+variables:
+  garbage_sensor_1: !input garbage_sensor_1
+  garbage_sensor_2: !input garbage_sensor_2
+  garbage_sensor_3: !input garbage_sensor_3
+  garbage_sensor_4: !input garbage_sensor_4
+  garbage_sensor_5: !input garbage_sensor_5
+  reminder_title: !input reminder_title
+  reminder_message: !input reminder_message
+  day_offset: !input day_offset
+
+trigger:
+  platform: time
+  at: !input reminder_time
+
+action:
+- service: !input notifier
+  data:
+    title: "{{ reminder_title }}"
+    message: "{{ reminder_message }}{{ [(state_attr(garbage_sensor_1, 'friendly_name'), states(garbage_sensor_1)), (state_attr(garbage_sensor_2, 'friendly_name'), states(garbage_sensor_2)), (state_attr(garbage_sensor_3, 'friendly_name'), states(garbage_sensor_3)), (state_attr(garbage_sensor_4, 'friendly_name'), states(garbage_sensor_4)), (state_attr(garbage_sensor_5, 'friendly_name'), states(garbage_sensor_5))] | selectattr('1', 'eq', (now() + timedelta(days = day_offset | int)).strftime('%Y-%m-%d')) | join(', ',  attribute=0) }}"
+- choose:
+  default:
+  - condition: template
+    value_template: '{{ media_player_volume != 0.0 }}'
+  - service: media_player.volume_set
+    entity_id: !input 'media_player'
+    data:
+      volume_level: '{{ media_player_volume }}'
+- service: tts.cloud_say
+  entity_id: !input 'media_player'
+  data:
+    message: !input 'message'
+    options:
+      gender: !input 'tts_gender'
+    language: !input 'tts_language'
